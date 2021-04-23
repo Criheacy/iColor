@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <FrameLayout
+        android:id="@+id/primary_color_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/default_background_color"/>
+
+    <FrameLayout
+        android:id="@+id/color_text_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:translationX="-10sp"
+        android:translationY="-3sp"
+        android:layout_centerInParent="true">
+
+        <include layout="@layout/color_value_text"/>
+
+    </FrameLayout>
+
+
+    <FrameLayout
+        android:id="@+id/mini_color_text_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_centerInParent="true"
+        android:visibility="gone">
+
+        <include layout="@layout/color_value_text"/>
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:orientation="vertical">
+
+        <SeekBar
+            android:id="@+id/red_test"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:max="255"/>
+
+        <SeekBar
+            android:id="@+id/green_test"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:max="255"/>
+
+        <SeekBar
+            android:id="@+id/blue_test"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:max="255"/>
+
+    </LinearLayout>
+
+</RelativeLayout>

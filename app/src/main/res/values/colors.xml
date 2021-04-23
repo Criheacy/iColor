@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- color resources value -->
+    <color name="white">#FFFFFFFF</color>
+    <color name="gray_fe">#FFFEFEFE</color>
+    <color name="gray_fc">#FFFCFCFC</color>
+    <color name="gray_f8">#FFF8F8F8</color>
+    <color name="gray_f0">#FFF0F0F0</color>
+    <color name="gray_e8">#FFE8E8E8</color>
+    <color name="gray_e0">#FFE0E0E0</color>
+    <color name="gray_d0">#FFD0D0D0</color>
+    <color name="gray_c0">#FFC0C0C0</color>
+    <color name="gray_b0">#FFB0B0B0</color>
+    <color name="gray_a0">#FFA0A0A0</color>
+    <color name="gray_90">#FF909090</color>
+    <color name="gray_80">#FF808080</color>
+    <color name="gray_70">#FF707070</color>
+    <color name="gray_60">#FF606060</color>
+    <color name="gray_50">#FF505050</color>
+    <color name="gray_40">#FF404040</color>
+    <color name="gray_30">#FF303030</color>
+    <color name="gray_20">#FF202020</color>
+    <color name="gray_10">#FF101010</color>
+    <color name="black">#FF000000</color>
+
+    <!-- item color -->
+    <color name="default_background_color">@color/gray_f8</color>
+
+    <color name="dark_prefix_text_color">@color/gray_60</color>
+    <color name="dark_text_color">@color/gray_20</color>
+
+    <color name="light_prefix_text_color">@color/gray_e0</color>
+    <color name="light_text_color">@color/gray_fc</color>
+</resources>
