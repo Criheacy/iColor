@@ -14,6 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.icolor.utils.ColorUtil;
 import com.icolor.utils.GestureUtil;
 import com.icolor.utils.WindowUtil;
 
@@ -196,7 +197,7 @@ public class ColorTextWheel {
                     || (int) (currentValue + intervalCount) > maxValue) {
                 textViewInWheel[i % numberOfTextInWheel].setText(null);
             } else {
-                textViewInWheel[i % numberOfTextInWheel].setText(Integer.toString((int) (currentValue + intervalCount), 16));
+                textViewInWheel[i % numberOfTextInWheel].setText(ColorUtil.vec2string((int) (currentValue + intervalCount)));
             }
             i++;
         } while(i % numberOfTextInWheel != topTextViewIndex);

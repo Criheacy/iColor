@@ -1,5 +1,9 @@
 package com.icolor.utils;
 
+import android.util.Log;
+
+import androidx.annotation.IntRange;
+
 import static java.lang.Math.round;
 
 public class ColorUtil {
@@ -16,6 +20,22 @@ public class ColorUtil {
     }
 
     // Color format conversions
+
+    public static String vec2string(@IntRange(from = 0x00, to = 0xFF) int vec) {
+        StringBuilder result = new StringBuilder();
+        int _vec = vec;
+        for (int i = 0; i < 2; i++) {
+            result.append(digit2string(vec % 0x10));
+            vec /= 0x10;
+        }
+        return result.reverse().toString();
+    }
+
+    private static String digit2string(@IntRange(from = 0x0, to = 0xF) int vec) {
+        final int asciiOfA = 65;
+        if (vec <= 9) return String.valueOf(vec);
+        else return Character.toString((char) (vec - 10 + asciiOfA));
+    }
 
     // Encode components
     public static int rgba2int(int r, int g, int b, int a) {

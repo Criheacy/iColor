@@ -92,7 +92,7 @@ public class GestureUtil {
         return (float) Math.acos(dotProduct / (length1 * length2));
     }
 
-    private float orientationAcceptableRange = 30f;
+    private float orientationAcceptableRange = 40f;
 
     private boolean isDragging;
     private GestureOrientation currentOrientation;
