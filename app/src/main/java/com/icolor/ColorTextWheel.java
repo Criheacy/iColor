@@ -1,5 +1,7 @@
 package com.icolor;
 
+import android.animation.Animator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
@@ -37,17 +39,57 @@ public class ColorTextWheel {
             textViewInWheel[i].setText("AF");   // test
             container.addView(textContainerInWheel[i]);
         }
-        focusedTextContainerInWheel = textContainerInWheel[(numberOfTextInWheel + 1) / 2];
 
-        containerAlpha = new FocusedInterpolator(100f, 3, 0f, 1f);
+        globalAlphaAnimator = new ValueAnimator();
+        globalAlphaAnimator.addUpdateListener(animation -> {
+            globalAlpha = (float) animation.getAnimatedValue();
+            updateTextContainer();
+        });
+        globalAlphaAnimator.addListener(new Animator.AnimatorListener() {
+            @Override public void onAnimationStart(Animator animation) { }
+            @Override public void onAnimationCancel(Animator animation) { }
+            @Override public void onAnimationRepeat(Animator animation) { }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (globalAlpha == 0f) {
+                    changeContainerSize(RelativeLayout.LayoutParams.WRAP_CONTENT,
+                            RelativeLayout.LayoutParams.WRAP_CONTENT);
+                }
+            }
+
+        });
+
+        resetOffsetAnimator = new ValueAnimator();
+        resetOffsetAnimator.setDuration(resetOffsetDuration);
+        resetOffsetAnimator.addUpdateListener(animation -> {
+            currentWheelOffset = (int) animation.getAnimatedValue();
+            updateTextContainer();
+        });
+
+        containerAlpha = new FocusedInterpolator(150f, 3, 0f, 1f);
         containerScale = new FocusedInterpolator(100f, 3, 0.7f, 1f);
-        containerTranslation = new MagneticInterpolator(0.7f, 10f, 1f);
-
+        containerTranslation = new MagneticInterpolator(100f, 2.6f, 0.7f, 0.65f);
         currentValue = 128;
     }
 
     public enum ScrollingOrientation {
         NONE, HORIZONTAL, VERTICAL
+    }
+
+    public void startScrolling() {
+        globalAlphaAnimator.setDuration(emergeDuration);
+        globalAlphaAnimator.setFloatValues(globalAlpha, 0.8f);
+        globalAlphaAnimator.start();
+    }
+
+    public void endScrolling() {
+        globalAlphaAnimator.setDuration(fadeOutDuration);
+        globalAlphaAnimator.setFloatValues(globalAlpha, 0f);
+        globalAlphaAnimator.start();
+
+        resetOffsetAnimator.setIntValues(currentWheelOffset, 0);
+        resetOffsetAnimator.start();
     }
 
     public void scrollHorizontal() {
@@ -80,14 +122,14 @@ public class ColorTextWheel {
     private void updateWheelOffset(int deltaOffset) {
         currentWheelOffset += deltaOffset;
         boolean textHasChanged = false;
-        while (currentWheelOffset >= textContainerSpacingInWheel) {
+        while (currentWheelOffset >= textContainerSpacingInWheel / 2) {
             currentWheelOffset -= textContainerSpacingInWheel;
             topTextViewIndex += numberOfTextInWheel - 1;
             topTextViewIndex %= numberOfTextInWheel;
             currentValue--;
             textHasChanged = true;
         }
-        while (currentWheelOffset <= -textContainerSpacingInWheel) {
+        while (currentWheelOffset <= -textContainerSpacingInWheel / 2) {
             currentWheelOffset += textContainerSpacingInWheel;
             topTextViewIndex += numberOfTextInWheel + 1;
             topTextViewIndex %= numberOfTextInWheel;
@@ -116,28 +158,36 @@ public class ColorTextWheel {
         do {
             float intervalCount = i - topTextViewIndex - numberOfTextInWheel / 2f + 0.5f;
             float offset = intervalCount * textContainerSpacingInWheel + currentWheelOffset;
+            if (i % numberOfTextInWheel == (topTextViewIndex + numberOfTextInWheel / 2) % numberOfTextInWheel) {
+                textContainerInWheel[i % numberOfTextInWheel].setAlpha(containerAlpha.getInterpolation(offset));
+            } else {
+                textContainerInWheel[i % numberOfTextInWheel].setAlpha(containerAlpha.getInterpolation(offset) * globalAlpha);
+            }
             textContainerInWheel[i % numberOfTextInWheel].setTranslationY(containerTranslation.getInterpolation(offset));
-            textContainerInWheel[i % numberOfTextInWheel].setAlpha(containerAlpha.getInterpolation(offset));
             textContainerInWheel[i % numberOfTextInWheel].setScaleX(containerScale.getInterpolation(offset));
             textContainerInWheel[i % numberOfTextInWheel].setScaleY(containerScale.getInterpolation(offset));
             i++;
         } while(i % numberOfTextInWheel != topTextViewIndex);
     }
 
-    // odd number performs better
     private final int numberOfTextInWheel = 7;
     private final View[] textContainerInWheel;
-    private final View focusedTextContainerInWheel;
     private final TextView[] textViewInWheel;
     private int topTextViewIndex;
 
-    private final int textContainerSpacingInWheel = 160;
+    private final int textContainerSpacingInWheel = 180;
     private int currentWheelOffset;
 
-    private float globalAlpha = 1f;
-    private FocusedInterpolator containerAlpha;
-    private FocusedInterpolator containerScale;
-    private MagneticInterpolator containerTranslation;
+    private final long emergeDuration = 300;
+    private final long fadeOutDuration = 800;
+    private final ValueAnimator globalAlphaAnimator;
+    private final long resetOffsetDuration = 300;
+    private final ValueAnimator resetOffsetAnimator;
+
+    private float globalAlpha = 0.5f;
+    private final FocusedInterpolator containerAlpha;
+    private final FocusedInterpolator containerScale;
+    private final MagneticInterpolator containerTranslation;
 
     private int currentValue;
     private ScrollingOrientation currentScrollingOrientation;
@@ -169,34 +219,42 @@ class FocusedInterpolator implements Interpolator {
 
 class MagneticInterpolator implements Interpolator {
     public float scale;
-    public float reduce;
-    public float magnetic;
+    public float times;
+    public float assimilate;
+    public float slope;
 
-    public MagneticInterpolator(float scale, float reduce, float magnetic) {
+    public MagneticInterpolator(float scale, float times, float assimilate, float slope) {
         this.scale = scale;
-        this.reduce = reduce;
-        this.magnetic = magnetic;
+        this.times = times;
+        this.assimilate = assimilate;
+        this.slope = slope;
     }
 
     @Override
     public float getInterpolation(float input) {
         // FIXME: Interpolator Error
-        boolean isNegative = false;
+        boolean negative = false;
         if (input < 0) {
             input = -input;
-            isNegative = true;
+            negative = true;
         }
-        float magneticValue;
-        if (input < reduce) {
-            magneticValue = (float) ((-scale / reduce) * Math.pow(input, 2) + scale * input);
-        } else {
-            magneticValue = (float) (1f / (scale * Math.pow(input - reduce, 2) - scale * (reduce - 1)));
+
+        input /= scale;
+        float fraction = (input - assimilate) / (1 - assimilate);
+        if (fraction < 0) {
+            fraction = 0;
         }
-        Log.d("MAGENATIC", String.valueOf(magneticValue));
-        if (isNegative) {
-            return -input * scale + magnetic * magneticValue;
-        } else {
-            return input * scale - magnetic * magneticValue;
+        if (fraction > 1) {
+            fraction = 1;
         }
+
+        float magneticValue = (float) Math.pow(input, times);
+        float linearValue = (input - 1) * slope + 1;
+
+        float value = magneticValue * (1 - fraction) + linearValue * fraction;
+        if (negative) {
+            value = -value;
+        }
+        return value * scale;
     }
 }

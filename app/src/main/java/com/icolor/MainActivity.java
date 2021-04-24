@@ -3,17 +3,16 @@ package com.icolor;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.animation.ValueAnimator;
 import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.Window;
 import android.widget.SeekBar;
 
 import com.icolor.utils.ColorUtil;
+import com.icolor.utils.GestureUtil;
 import com.icolor.utils.GradientUtil;
 import com.icolor.utils.TouchHandlerUtil;
 import com.icolor.utils.WindowUtil;
@@ -21,7 +20,7 @@ import com.icolor.utils.WindowUtil;
 public class MainActivity extends AppCompatActivity {
 
     public GradientUtil gradientUtil;
-    public TouchHandlerUtil touchHandlerUtil;
+    public GestureUtil gestureUtil;
     public View primaryColorContainer;
     public ColorTextWheel wheelTest;
 
@@ -46,7 +45,32 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        touchHandlerUtil = new TouchHandlerUtil(new TouchHandlerUtil.OnGestureListener() {
+        gestureUtil = new GestureUtil(redValueText, new GestureUtil.OnGestureListener() {
+            @Override public void click() { }
+            @Override public void touch() { }
+
+            @Override
+            public void dragStart(GestureUtil.GestureOrientation orientation) {
+                if (orientation == GestureUtil.GestureOrientation.VERTICAL) {
+                    wheelTest.startScrolling();
+                }
+            }
+
+            @Override
+            public void dragging(GestureUtil.GestureOrientation orientation, int draggingDistance) {
+                if (orientation == GestureUtil.GestureOrientation.VERTICAL) {
+                    wheelTest.scrollVertical(draggingDistance);
+                }
+            }
+
+            @Override
+            public void dragEnd() {
+                wheelTest.endScrolling();
+            }
+        });
+
+
+                /*new TouchHandlerUtil.OnTouchEvent() {
             @Override
             public void onClick(Point p) {
                 Log.d("Click", p.toString());
@@ -58,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onTouch(Point p) {
                 Log.d("Touch", p.toString());
+                wheelTest.startScrolling();
             }
 
             @Override
@@ -69,9 +94,10 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onLeave() {
-
+                Log.d("Leave", "on leave called");
+                wheelTest.endScrolling();
             }
-        });
+        });*/
         primaryColorContainer = findViewById(R.id.primary_color_container);
 
         ((SeekBar) findViewById(R.id.red_test)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -100,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        return touchHandlerUtil.handle(event);
+        return gestureUtil.handle(event);
     }
 
     private void updatePrimaryColorContainer(int color) {

@@ -1,19 +1,18 @@
 package com.icolor.utils;
 
 import android.graphics.Point;
-import android.util.Log;
 import android.view.MotionEvent;
 
 public class TouchHandlerUtil {
-    public interface OnGestureListener {
+    public interface OnTouchEvent {
         void onClick(Point p);
         void onTouch(Point p);
         void onDrag(Point origin, Point dragTo, Point lastDragVector);
         void onLeave();
     }
 
-    public TouchHandlerUtil(OnGestureListener l) {
-        listener = l;
+    public TouchHandlerUtil(OnTouchEvent t) {
+        listener = t;
         downPoint = new Point();
         currentPoint = new Point();
         lastPoint = new Point();
@@ -58,7 +57,7 @@ public class TouchHandlerUtil {
 
     private static final float draggingJudgmentDistance = 5f;
 
-    private final OnGestureListener listener;
+    private final OnTouchEvent listener;
     private final Point downPoint;
     private final Point lastPoint;
     private final Point currentPoint;
