@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Interpolator;
@@ -13,15 +14,41 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.icolor.utils.GestureUtil;
 import com.icolor.utils.WindowUtil;
 
 public class ColorTextWheel {
-
-    private String TAG = "Text Wheel";
+    public interface OnValueUpdateListener {
+        void onValueUpdate(int value);
+    }
 
     public ColorTextWheel(Activity activity, RelativeLayout container) {
         this.activity = activity;
         this.container = container;
+
+        gestureUtil = new GestureUtil(container, new GestureUtil.OnGestureListener() {
+            @Override public void click() { }
+            @Override public void touch() { }
+
+            @Override
+            public void dragStart(GestureUtil.GestureOrientation orientation) {
+                if (orientation == GestureUtil.GestureOrientation.VERTICAL) {
+                    startScrolling();
+                }
+            }
+
+            @Override
+            public void dragging(GestureUtil.GestureOrientation orientation, int draggingDistance) {
+                if (orientation == GestureUtil.GestureOrientation.VERTICAL) {
+                    scrollVertical(draggingDistance);
+                }
+            }
+
+            @Override
+            public void dragEnd() {
+                endScrolling();
+            }
+        });
 
         textContainerInWheel = new View[numberOfTextInWheel];
         textViewInWheel = new TextView[numberOfTextInWheel];
@@ -33,10 +60,8 @@ public class ColorTextWheel {
             textParams.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
 
             textContainerInWheel[i] = inflater.inflate(R.layout.color_value_text, null);
-            textContainerInWheel[i].setTranslationY(i * 50);
             textContainerInWheel[i].setLayoutParams(textParams);
             textViewInWheel[i] = (TextView) textContainerInWheel[i].findViewById(R.id.value_text);
-            textViewInWheel[i].setText("AF");   // test
             container.addView(textContainerInWheel[i]);
         }
 
@@ -69,8 +94,19 @@ public class ColorTextWheel {
 
         containerAlpha = new FocusedInterpolator(150f, 3, 0f, 1f);
         containerScale = new FocusedInterpolator(100f, 3, 0.7f, 1f);
-        containerTranslation = new MagneticInterpolator(100f, 2.6f, 0.7f, 0.65f);
-        currentValue = 128;
+        containerTranslation = new MagneticInterpolator(100f, 3f, 0.7f, 0.65f);
+        currentValue = 240;
+
+        updateTextValue();
+        updateTextContainer();
+    }
+
+    public void setValueUpdateListener(OnValueUpdateListener l) {
+        valueUpdateListener = l;
+    }
+
+    public boolean handleGestureEvent(MotionEvent event) {
+        return gestureUtil.handle(event);
     }
 
     public enum ScrollingOrientation {
@@ -109,6 +145,10 @@ public class ColorTextWheel {
         return container;
     }
 
+    public int getCurrentValue() {
+        return currentValue;
+    }
+
     private void changeContainerSize(int widthDp, int heightDp) {
         float offsetX = container.getTranslationX();
         float offsetY = container.getTranslationY();
@@ -122,14 +162,16 @@ public class ColorTextWheel {
     private void updateWheelOffset(int deltaOffset) {
         currentWheelOffset += deltaOffset;
         boolean textHasChanged = false;
-        while (currentWheelOffset >= textContainerSpacingInWheel / 2) {
+        while (currentWheelOffset >= textContainerSpacingInWheel / 2
+                && currentValue > minValue) {
             currentWheelOffset -= textContainerSpacingInWheel;
             topTextViewIndex += numberOfTextInWheel - 1;
             topTextViewIndex %= numberOfTextInWheel;
             currentValue--;
             textHasChanged = true;
         }
-        while (currentWheelOffset <= -textContainerSpacingInWheel / 2) {
+        while (currentWheelOffset <= -textContainerSpacingInWheel / 2
+                && currentValue < maxValue) {
             currentWheelOffset += textContainerSpacingInWheel;
             topTextViewIndex += numberOfTextInWheel + 1;
             topTextViewIndex %= numberOfTextInWheel;
@@ -137,8 +179,10 @@ public class ColorTextWheel {
             textHasChanged = true;
         }
         if (textHasChanged) {
-            Log.d(TAG, "text update: " + currentValue);
             updateTextValue();
+            if (valueUpdateListener != null) {
+                valueUpdateListener.onValueUpdate(currentValue);
+            }
         }
         updateTextContainer();
     }
@@ -146,9 +190,14 @@ public class ColorTextWheel {
     private void updateTextValue() {
         int i = topTextViewIndex;
         do {
-            float intervalCount = i - topTextViewIndex - numberOfTextInWheel / 2f + 1f;
+            float intervalCount = i - topTextViewIndex - numberOfTextInWheel / 2f + 0.5f;
             // TODO: Customize an integer -> decimalView utility
-            textViewInWheel[i % numberOfTextInWheel].setText(Integer.toString((int) (currentValue + intervalCount), 16));
+            if ((int) (currentValue + intervalCount) < minValue
+                    || (int) (currentValue + intervalCount) > maxValue) {
+                textViewInWheel[i % numberOfTextInWheel].setText(null);
+            } else {
+                textViewInWheel[i % numberOfTextInWheel].setText(Integer.toString((int) (currentValue + intervalCount), 16));
+            }
             i++;
         } while(i % numberOfTextInWheel != topTextViewIndex);
     }
@@ -159,7 +208,7 @@ public class ColorTextWheel {
             float intervalCount = i - topTextViewIndex - numberOfTextInWheel / 2f + 0.5f;
             float offset = intervalCount * textContainerSpacingInWheel + currentWheelOffset;
             if (i % numberOfTextInWheel == (topTextViewIndex + numberOfTextInWheel / 2) % numberOfTextInWheel) {
-                textContainerInWheel[i % numberOfTextInWheel].setAlpha(containerAlpha.getInterpolation(offset));
+                textContainerInWheel[i % numberOfTextInWheel].setAlpha(focusingAlpha);
             } else {
                 textContainerInWheel[i % numberOfTextInWheel].setAlpha(containerAlpha.getInterpolation(offset) * globalAlpha);
             }
@@ -184,16 +233,21 @@ public class ColorTextWheel {
     private final long resetOffsetDuration = 300;
     private final ValueAnimator resetOffsetAnimator;
 
-    private float globalAlpha = 0.5f;
+    private float globalAlpha = 0f;
+    private float focusingAlpha = 0.95f;
     private final FocusedInterpolator containerAlpha;
     private final FocusedInterpolator containerScale;
     private final MagneticInterpolator containerTranslation;
 
     private int currentValue;
+    private final int minValue = 0x00;
+    private final int maxValue = 0xFF;
+    private OnValueUpdateListener valueUpdateListener;
     private ScrollingOrientation currentScrollingOrientation;
 
     private final Activity activity;
     private final RelativeLayout container;
+    private final GestureUtil gestureUtil;
 }
 
 class FocusedInterpolator implements Interpolator {

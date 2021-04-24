@@ -20,9 +20,9 @@ import com.icolor.utils.WindowUtil;
 public class MainActivity extends AppCompatActivity {
 
     public GradientUtil gradientUtil;
-    public GestureUtil gestureUtil;
     public View primaryColorContainer;
-    public ColorTextWheel wheelTest;
+
+    public ColorTextWheel[] colorTextWheels;
 
     @Override @RequiresApi(api = Build.VERSION_CODES.O)
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,100 +33,39 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        View redValueText = findViewById(R.id.red_value_text_container);
-
-        wheelTest = new ColorTextWheel(this, findViewById(R.id.red_value_text_container));
-        gradientUtil = new GradientUtil(ColorUtil.WHITE);
-
-        gradientUtil.addGradientListener(new GradientUtil.GradientListener() {
-            @Override
-            public void onColorChanged(int color) {
-                updatePrimaryColorContainer(color);
-            }
-        });
-
-        gestureUtil = new GestureUtil(redValueText, new GestureUtil.OnGestureListener() {
-            @Override public void click() { }
-            @Override public void touch() { }
-
-            @Override
-            public void dragStart(GestureUtil.GestureOrientation orientation) {
-                if (orientation == GestureUtil.GestureOrientation.VERTICAL) {
-                    wheelTest.startScrolling();
-                }
-            }
-
-            @Override
-            public void dragging(GestureUtil.GestureOrientation orientation, int draggingDistance) {
-                if (orientation == GestureUtil.GestureOrientation.VERTICAL) {
-                    wheelTest.scrollVertical(draggingDistance);
-                }
-            }
-
-            @Override
-            public void dragEnd() {
-                wheelTest.endScrolling();
-            }
-        });
-
-
-                /*new TouchHandlerUtil.OnTouchEvent() {
-            @Override
-            public void onClick(Point p) {
-                Log.d("Click", p.toString());
-                if (WindowUtil.pointInView(p, redValueText)) {
-                    Log.d("InRect", "True");
-                }
-            }
-
-            @Override
-            public void onTouch(Point p) {
-                Log.d("Touch", p.toString());
-                wheelTest.startScrolling();
-            }
-
-            @Override
-            public void onDrag(Point origin, Point dragTo, Point lastDragVector) {
-                // Log.d("Drag", origin.toString() + " -> " + dragTo.toString());
-                if (WindowUtil.pointInView(dragTo, wheelTest.getContainerView()))
-                    wheelTest.scrollVertical(lastDragVector.y);
-            }
-
-            @Override
-            public void onLeave() {
-                Log.d("Leave", "on leave called");
-                wheelTest.endScrolling();
-            }
-        });*/
         primaryColorContainer = findViewById(R.id.primary_color_container);
 
-        ((SeekBar) findViewById(R.id.red_test)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        gradientUtil = new GradientUtil(ColorUtil.WHITE);
+        gradientUtil.addGradientListener(color -> updatePrimaryColorContainer(color));
 
-            }
+        colorTextWheels = new ColorTextWheel[3];
+        colorTextWheels[0] = new ColorTextWheel(this, findViewById(R.id.red_value_text_container));
+        colorTextWheels[1] = new ColorTextWheel(this, findViewById(R.id.green_value_text_container));
+        colorTextWheels[2] = new ColorTextWheel(this, findViewById(R.id.blue_value_text_container));
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                int red = ((SeekBar) findViewById(R.id.red_test)).getProgress();
-                int green = ((SeekBar) findViewById(R.id.green_test)).getProgress();
-                int blue = ((SeekBar) findViewById(R.id.blue_test)).getProgress();
-                Log.d("Color", "Color: " + red + " " + green + " " + blue);
-                gradientUtil.gradientTo(ColorUtil.rgba2int(red, green, blue, 0xFF));
-                // updatePrimaryColorContainer(ColorUtil.rgba2int(red, green, blue, 0xFF));
-            }
-        });
-
+        for (ColorTextWheel colorTextWheel: colorTextWheels) {
+            colorTextWheel.setValueUpdateListener(value -> setGradientUseWheels());
+        }
+        setGradientUseWheels();
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        return gestureUtil.handle(event);
+        boolean isHandled = false;
+        for (ColorTextWheel colorTextWheel: colorTextWheels) {
+            isHandled = isHandled || colorTextWheel.handleGestureEvent(event);
+        }
+        return isHandled;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void setGradientUseWheels() {
+        gradientUtil.gradientTo(ColorUtil.rgba2int(
+                colorTextWheels[0].getCurrentValue(),
+                colorTextWheels[1].getCurrentValue(),
+                colorTextWheels[2].getCurrentValue(),
+                0xFF
+        ));
     }
 
     private void updatePrimaryColorContainer(int color) {
