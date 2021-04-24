@@ -4,47 +4,75 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.animation.ValueAnimator;
+import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
+import android.view.Window;
 import android.widget.SeekBar;
 
 import com.icolor.utils.ColorUtil;
 import com.icolor.utils.GradientUtil;
+import com.icolor.utils.TouchHandlerUtil;
 import com.icolor.utils.WindowUtil;
 
 public class MainActivity extends AppCompatActivity {
 
     public GradientUtil gradientUtil;
+    public TouchHandlerUtil touchHandlerUtil;
     public View primaryColorContainer;
-
-    private ValueAnimator testAnimator;
+    public ColorTextWheel wheelTest;
 
     @Override @RequiresApi(api = Build.VERSION_CODES.O)
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        WindowUtil.SetFullScreen(this);
-        WindowUtil.SetKeepScreenOn(this);
+        WindowUtil.setFullScreen(this);
+        WindowUtil.setKeepScreenOn(this);
 
         setContentView(R.layout.activity_main);
 
-        gradientUtil = new GradientUtil(ColorUtil.WHITE);
-        primaryColorContainer = findViewById(R.id.primary_color_container);
-        testAnimator = new ValueAnimator();
+        View redValueText = findViewById(R.id.red_value_text_container);
 
-        testAnimator.setDuration(1000);
-        testAnimator.setRepeatCount(ValueAnimator.INFINITE);
-        testAnimator.setIntValues(0, 1);
-        testAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+        wheelTest = new ColorTextWheel(this, findViewById(R.id.red_value_text_container));
+        gradientUtil = new GradientUtil(ColorUtil.WHITE);
+
+        gradientUtil.addGradientListener(new GradientUtil.GradientListener() {
             @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                updatePrimaryColorContainer(gradientUtil.getColor());
+            public void onColorChanged(int color) {
+                updatePrimaryColorContainer(color);
             }
         });
-        testAnimator.start();
+
+        touchHandlerUtil = new TouchHandlerUtil(new TouchHandlerUtil.OnGestureListener() {
+            @Override
+            public void onClick(Point p) {
+                Log.d("Click", p.toString());
+                if (WindowUtil.pointInView(p, redValueText)) {
+                    Log.d("InRect", "True");
+                }
+            }
+
+            @Override
+            public void onTouch(Point p) {
+                Log.d("Touch", p.toString());
+            }
+
+            @Override
+            public void onDrag(Point origin, Point dragTo, Point lastDragVector) {
+                // Log.d("Drag", origin.toString() + " -> " + dragTo.toString());
+                if (WindowUtil.pointInView(dragTo, wheelTest.getContainerView()))
+                    wheelTest.scrollVertical(lastDragVector.y);
+            }
+
+            @Override
+            public void onLeave() {
+
+            }
+        });
+        primaryColorContainer = findViewById(R.id.primary_color_container);
 
         ((SeekBar) findViewById(R.id.red_test)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -70,7 +98,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return touchHandlerUtil.handle(event);
+    }
 
     private void updatePrimaryColorContainer(int color) {
         primaryColorContainer.setBackgroundColor(color);

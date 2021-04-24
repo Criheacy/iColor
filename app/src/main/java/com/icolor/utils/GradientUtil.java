@@ -33,6 +33,19 @@ public class GradientUtil {
         }
     }
 
+    public void addGradientListener(GradientListener l) {
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                l.onColorChanged(getColor());
+            }
+        });
+    }
+
+    public interface GradientListener {
+        void onColorChanged(int color);
+    }
+
     private int startColor;
     private int distColor;
     private ValueAnimator animator;
