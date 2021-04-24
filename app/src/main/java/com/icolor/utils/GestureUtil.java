@@ -24,23 +24,27 @@ public class GestureUtil {
         isDragging = false;
         this.touchHandler = new TouchHandlerUtil(new TouchHandlerUtil.OnTouchEvent() {
             @Override
-            public void onClick(Point p) {
+            public boolean onClick(Point p) {
                 if (WindowUtil.pointInView(p, view)) {
                     gestureListener.click();
+                    return true;
                 }
+                return false;
             }
 
             @Override
-            public void onTouch(Point p) {
+            public boolean onTouch(Point p) {
                 if (WindowUtil.pointInView(p, view)) {
                     gestureListener.touch();
+                    return false;
                 }
+                return false;
             }
 
             @Override
-            public void onDrag(Point origin, Point dragTo, Point lastDragVector) {
+            public boolean onDrag(Point origin, Point dragTo, Point lastDragVector) {
                 if (!WindowUtil.pointInView(origin, view)) {
-                    return;
+                    return false;
                 }
                 if (!isDragging) {
                     isDragging = true;
@@ -53,13 +57,15 @@ public class GestureUtil {
                 } else if (currentOrientation.equals(GestureOrientation.VERTICAL)) {
                     gestureListener.dragging(currentOrientation, lastDragVector.y);
                 }
+                return true;
             }
 
             @Override
-            public void onLeave() {
+            public boolean onLeave() {
                 isDragging = false;
                 currentOrientation = GestureOrientation.NONE;
                 gestureListener.dragEnd();
+                return false;
             }
         });
     }

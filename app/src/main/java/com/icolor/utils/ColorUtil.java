@@ -9,7 +9,8 @@ import static java.lang.Math.round;
 public class ColorUtil {
 
     public static int WHITE = 0xFFFFFFFF;
-    public static int BLACK = 0x00000000;
+    public static int GRAY  = 0xFF808080;
+    public static int BLACK = 0xFF000000;
 
     public static int blend(int color1, int color2, float fraction) {
         int r = (int) round(int2ri(color1) * (1 - fraction) + int2ri(color2) * fraction);
@@ -35,6 +36,10 @@ public class ColorUtil {
         final int asciiOfA = 65;
         if (vec <= 9) return String.valueOf(vec);
         else return Character.toString((char) (vec - 10 + asciiOfA));
+    }
+
+    public static int lightness(int color) {
+        return (int2ri(color) + int2gi(color) + int2bi(color)) / 3;
     }
 
     // Encode components

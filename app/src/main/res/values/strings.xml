@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">iColor</string>
     
-    <string name="prefix_color_text">#</string>
+    <string name="color_prefix_text">#</string>
 </resources>

@@ -91,12 +91,9 @@ public class ColorTextWheel {
             currentWheelOffset = (int) animation.getAnimatedValue();
             updateTextContainer();
         });
-
-        containerAlpha = new FocusedInterpolator(150f, 3, 0f, 1f);
-        containerScale = new FocusedInterpolator(100f, 3, 0.7f, 1f);
-        containerTranslation = new MagneticInterpolator(100f, 3f, 0.7f, 0.65f);
         currentValue = 240;
 
+        startVerticalScroll();
         updateTextValue();
         updateTextContainer();
     }
@@ -130,8 +127,13 @@ public class ColorTextWheel {
 
     public void startHorizontalScroll() {
         currentScrollingOrientation = ScrollingOrientation.HORIZONTAL;
-        changeContainerSize(RelativeLayout.LayoutParams.MATCH_PARENT,
+        changeContainerSize((int) WindowUtil.dps2dp(180, activity),
                 RelativeLayout.LayoutParams.WRAP_CONTENT);
+
+        containerAlpha = new FocusedInterpolator(100f, 4, 0f, 1f);
+        containerScale = new FocusedInterpolator(80f, 4, 0.6f, 1f);
+        containerTranslation = new MagneticInterpolator(100f, 2.5f, 0.5f, 0.55f);
+
         updateTextValue();
     }
 
@@ -139,6 +141,11 @@ public class ColorTextWheel {
         currentScrollingOrientation = ScrollingOrientation.VERTICAL;
         changeContainerSize(RelativeLayout.LayoutParams.WRAP_CONTENT,
                 RelativeLayout.LayoutParams.MATCH_PARENT);
+
+        containerAlpha = new FocusedInterpolator(150f, 3, 0f, 1f);
+        containerScale = new FocusedInterpolator(100f, 3, 0.7f, 1f);
+        containerTranslation = new MagneticInterpolator(100f, 3f, 0.7f, 0.65f);
+
         updateTextValue();
     }
 
@@ -287,20 +294,20 @@ public class ColorTextWheel {
     private int topTextViewIndex;
 
     private final int verticalSpacingInWheel = 180;
-    private final int horizontalSpacingInWheel = 200;
+    private final int horizontalSpacingInWheel = 180;
     private int currentWheelOffset;
 
-    private final long emergeDuration = 300;
-    private final long fadeOutDuration = 800;
+    private final long emergeDuration = 150;
+    private final long fadeOutDuration = 300;
     private final ValueAnimator globalAlphaAnimator;
-    private final long resetOffsetDuration = 300;
+    private final long resetOffsetDuration = 100;
     private final ValueAnimator resetOffsetAnimator;
 
     private float globalAlpha = 0f;
     private float focusingAlpha = 0.95f;
-    private final FocusedInterpolator containerAlpha;
-    private final FocusedInterpolator containerScale;
-    private final MagneticInterpolator containerTranslation;
+    private FocusedInterpolator containerAlpha;
+    private FocusedInterpolator containerScale;
+    private MagneticInterpolator containerTranslation;
 
     private int currentValue;
     private final int minValue = 0x00;
@@ -310,6 +317,8 @@ public class ColorTextWheel {
 
     private final Activity activity;
     private final RelativeLayout container;
+    private final long containerOffsetDuration = 300;
+
     private final GestureUtil gestureUtil;
 }
 

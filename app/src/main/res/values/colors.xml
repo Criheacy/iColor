@@ -26,9 +26,6 @@
     <!-- item color -->
     <color name="default_background_color">@color/gray_f8</color>
 
-    <color name="dark_prefix_text_color">@color/gray_60</color>
     <color name="dark_text_color">@color/gray_20</color>
-
-    <color name="light_prefix_text_color">@color/gray_e0</color>
     <color name="light_text_color">@color/gray_fc</color>
 </resources>

@@ -14,9 +14,10 @@
         android:background="@color/default_background_color"/>
 
     <TextView
+        android:id="@+id/color_prefix_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/prefix_color_text"
+        android:text="@string/color_prefix_text"
         android:textSize="40sp"
         android:translationX="-110dp"
         android:translationY="-3dp"

@@ -3,23 +3,29 @@ package com.icolor;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.SeekBar;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import com.icolor.utils.ColorUtil;
-import com.icolor.utils.GestureUtil;
 import com.icolor.utils.GradientUtil;
-import com.icolor.utils.TouchHandlerUtil;
 import com.icolor.utils.WindowUtil;
 
 public class MainActivity extends AppCompatActivity {
 
-    public GradientUtil gradientUtil;
+    public GradientUtil primaryColorGradient;
+    public GradientUtil textColorGradient;
+
+    private enum ColorTheme {
+        DARK, LIGHT
+    }
+
+    private ColorTheme textColorTheme;
     public View primaryColorContainer;
 
     public ColorTextWheel[] colorTextWheels;
@@ -35,8 +41,12 @@ public class MainActivity extends AppCompatActivity {
 
         primaryColorContainer = findViewById(R.id.primary_color_container);
 
-        gradientUtil = new GradientUtil(ColorUtil.WHITE);
-        gradientUtil.addGradientListener(color -> updatePrimaryColorContainer(color));
+        primaryColorGradient = new GradientUtil(ColorUtil.WHITE);
+        primaryColorGradient.addGradientListener(color -> updatePrimaryColorContainer(color));
+
+        textColorTheme = ColorTheme.LIGHT;
+        textColorGradient = new GradientUtil(R.color.dark_text_color);
+        textColorGradient.addGradientListener(color -> updateTextColor(color));
 
         colorTextWheels = new ColorTextWheel[3];
         colorTextWheels[0] = new ColorTextWheel(this, findViewById(R.id.red_value_text_container));
@@ -61,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void setGradientUseWheels() {
-        gradientUtil.gradientTo(ColorUtil.rgba2int(
+        primaryColorGradient.gradientTo(ColorUtil.rgba2int(
                 colorTextWheels[0].getCurrentValue(),
                 colorTextWheels[1].getCurrentValue(),
                 colorTextWheels[2].getCurrentValue(),
@@ -69,7 +79,42 @@ public class MainActivity extends AppCompatActivity {
         ));
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void updatePrimaryColorContainer(int color) {
         primaryColorContainer.setBackgroundColor(color);
+
+        int lightness = ColorUtil.lightness(ColorUtil.rgba2int(
+                colorTextWheels[0].getCurrentValue(),
+                colorTextWheels[1].getCurrentValue(),
+                colorTextWheels[2].getCurrentValue(),
+                0xFF
+        ));
+
+        if (lightness > 0x80 && textColorTheme == ColorTheme.LIGHT) {
+            Log.d("Text Theme", "TO DARK");
+            textColorGradient.gradientTo(ColorUtil.BLACK);
+            textColorTheme = ColorTheme.DARK;
+        } else if (lightness < 0x60 && textColorTheme == ColorTheme.DARK) {
+            Log.d("Text Theme", "TO LIGHT");
+            textColorGradient.gradientTo(ColorUtil.WHITE);
+            textColorTheme = ColorTheme.LIGHT;
+        }
+    }
+
+    private void updateTextColor(int color) {
+        Log.d("Update Text Color", String.valueOf(color));
+        for (ColorTextWheel colorTextWheel : colorTextWheels) {
+            int childCount = ((ViewGroup) colorTextWheel.getContainerView()).getChildCount();
+            for (int i = 0; i < childCount; i++) {
+                FrameLayout valueTextFrame = (FrameLayout) ((ViewGroup) colorTextWheel
+                        .getContainerView())
+                        .getChildAt(i);
+                ((TextView) valueTextFrame
+                        .getChildAt(0))
+                        .setTextColor(color);
+            }
+        }
+        ((TextView) findViewById(R.id.color_prefix_text)).setTextColor
+                (ColorUtil.blend(color, ColorUtil.GRAY, 0.3f));
     }
 }

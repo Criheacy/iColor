@@ -5,10 +5,10 @@ import android.view.MotionEvent;
 
 public class TouchHandlerUtil {
     public interface OnTouchEvent {
-        void onClick(Point p);
-        void onTouch(Point p);
-        void onDrag(Point origin, Point dragTo, Point lastDragVector);
-        void onLeave();
+        boolean onClick(Point p);
+        boolean onTouch(Point p);
+        boolean onDrag(Point origin, Point dragTo, Point lastDragVector);
+        boolean onLeave();
     }
 
     public TouchHandlerUtil(OnTouchEvent t) {
@@ -24,28 +24,28 @@ public class TouchHandlerUtil {
             case MotionEvent.ACTION_DOWN:
                 downPoint.x = (int) event.getX();
                 downPoint.y = (int) event.getY();
-                listener.onTouch(new Point(downPoint));
-                break;
+                return listener.onTouch(new Point(downPoint));
+
             case MotionEvent.ACTION_MOVE:
                 currentPoint.x = (int) event.getX();
                 currentPoint.y = (int) event.getY();
 
+                boolean result = false;
                 if (!isDragging && touchPointDistance(currentPoint, downPoint) > draggingJudgmentDistance) {
                     isDragging = true;
                 } else if (isDragging) {
-                    listener.onDrag(new Point(downPoint), new Point(currentPoint),
+                    result = listener.onDrag(new Point(downPoint), new Point(currentPoint),
                             new Point(currentPoint.x - lastPoint.x,currentPoint.y - lastPoint.y));
                 }
                 lastPoint.x = currentPoint.x;
                 lastPoint.y = currentPoint.y;
-                break;
+                return result;
             case MotionEvent.ACTION_UP:
                 if (!isDragging) {
-                    listener.onClick(new Point(downPoint));
+                    return listener.onClick(new Point(downPoint));
                 }
                 isDragging = false;
-                listener.onLeave();
-                break;
+                return listener.onLeave();
             default: break;
         }
         return false;
