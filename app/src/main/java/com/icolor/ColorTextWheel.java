@@ -4,13 +4,11 @@ import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Interpolator;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -33,16 +31,17 @@ public class ColorTextWheel {
 
             @Override
             public void dragStart(GestureUtil.GestureOrientation orientation) {
-                if (orientation == GestureUtil.GestureOrientation.VERTICAL) {
-                    startScrolling();
+                startScrolling();
+                if (orientation == GestureUtil.GestureOrientation.HORIZONTAL) {
+                    startHorizontalScroll();
+                } else if (orientation == GestureUtil.GestureOrientation.VERTICAL) {
+                    startVerticalScroll();
                 }
             }
 
             @Override
             public void dragging(GestureUtil.GestureOrientation orientation, int draggingDistance) {
-                if (orientation == GestureUtil.GestureOrientation.VERTICAL) {
-                    scrollVertical(draggingDistance);
-                }
+                scroll(draggingDistance);
             }
 
             @Override
@@ -129,16 +128,21 @@ public class ColorTextWheel {
         resetOffsetAnimator.start();
     }
 
-    public void scrollHorizontal() {
+    public void startHorizontalScroll() {
         currentScrollingOrientation = ScrollingOrientation.HORIZONTAL;
-
+        changeContainerSize(RelativeLayout.LayoutParams.MATCH_PARENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT);
+        updateTextValue();
     }
 
-    public void scrollVertical(int scrollOffset) {
+    public void startVerticalScroll() {
         currentScrollingOrientation = ScrollingOrientation.VERTICAL;
         changeContainerSize(RelativeLayout.LayoutParams.WRAP_CONTENT,
                 RelativeLayout.LayoutParams.MATCH_PARENT);
+        updateTextValue();
+    }
 
+    public void scroll(int scrollOffset) {
         updateWheelOffset(scrollOffset);
     }
 
@@ -163,21 +167,46 @@ public class ColorTextWheel {
     private void updateWheelOffset(int deltaOffset) {
         currentWheelOffset += deltaOffset;
         boolean textHasChanged = false;
-        while (currentWheelOffset >= textContainerSpacingInWheel / 2
-                && currentValue > minValue) {
-            currentWheelOffset -= textContainerSpacingInWheel;
-            topTextViewIndex += numberOfTextInWheel - 1;
-            topTextViewIndex %= numberOfTextInWheel;
-            currentValue--;
-            textHasChanged = true;
-        }
-        while (currentWheelOffset <= -textContainerSpacingInWheel / 2
-                && currentValue < maxValue) {
-            currentWheelOffset += textContainerSpacingInWheel;
-            topTextViewIndex += numberOfTextInWheel + 1;
-            topTextViewIndex %= numberOfTextInWheel;
-            currentValue++;
-            textHasChanged = true;
+        if (currentScrollingOrientation == ScrollingOrientation.VERTICAL) {
+            while (currentWheelOffset >= verticalSpacingInWheel / 2
+                    && currentValue > minValue) {
+                currentWheelOffset -= verticalSpacingInWheel;
+                topTextViewIndex += numberOfTextInWheel - 1;
+                topTextViewIndex %= numberOfTextInWheel;
+                currentValue--;
+                textHasChanged = true;
+            }
+            while (currentWheelOffset <= -verticalSpacingInWheel / 2
+                    && currentValue < maxValue) {
+                currentWheelOffset += verticalSpacingInWheel;
+                topTextViewIndex += numberOfTextInWheel + 1;
+                topTextViewIndex %= numberOfTextInWheel;
+                currentValue++;
+                textHasChanged = true;
+            }
+        } else if (currentScrollingOrientation == ScrollingOrientation.HORIZONTAL) {
+            while (currentWheelOffset >= horizontalSpacingInWheel / 2
+                    && currentValue > minValue) {
+                currentWheelOffset -= horizontalSpacingInWheel;
+                topTextViewIndex += numberOfTextInWheel - 1;
+                topTextViewIndex %= numberOfTextInWheel;
+                currentValue -= 0x10;
+                if (currentValue < 0) {
+                    currentValue = 0;
+                }
+                textHasChanged = true;
+            }
+            while (currentWheelOffset <= -horizontalSpacingInWheel / 2
+                    && currentValue < maxValue) {
+                currentWheelOffset += horizontalSpacingInWheel;
+                topTextViewIndex += numberOfTextInWheel + 1;
+                topTextViewIndex %= numberOfTextInWheel;
+                currentValue += 0x10;
+                if (currentValue > 0xFF) {
+                    currentValue = 0xFF;
+                }
+                textHasChanged = true;
+            }
         }
         if (textHasChanged) {
             updateTextValue();
@@ -190,32 +219,64 @@ public class ColorTextWheel {
 
     private void updateTextValue() {
         int i = topTextViewIndex;
+        int minValueIndex = -1;
+        int maxValueIndex = -1;
+
         do {
-            float intervalCount = i - topTextViewIndex - numberOfTextInWheel / 2f + 0.5f;
-            // TODO: Customize an integer -> decimalView utility
-            if ((int) (currentValue + intervalCount) < minValue
-                    || (int) (currentValue + intervalCount) > maxValue) {
+            int value = currentValue;
+            if (currentScrollingOrientation == ScrollingOrientation.HORIZONTAL) {
+                value = currentValue + (int) (i - topTextViewIndex - numberOfTextInWheel / 2f + 0.5f) * 0x10;
+            } else if (currentScrollingOrientation == ScrollingOrientation.VERTICAL) {
+                value = currentValue + (int) (i - topTextViewIndex - numberOfTextInWheel / 2f + 0.5f);
+            }
+
+            if (value <= minValue ) {
+                minValueIndex = i % numberOfTextInWheel;
+                textViewInWheel[i % numberOfTextInWheel].setText(null);
+            } else if (value >= maxValue) {
+                if (maxValueIndex == -1) {
+                    maxValueIndex = i % numberOfTextInWheel;
+                }
                 textViewInWheel[i % numberOfTextInWheel].setText(null);
             } else {
-                textViewInWheel[i % numberOfTextInWheel].setText(ColorUtil.vec2string((int) (currentValue + intervalCount)));
+                textViewInWheel[i % numberOfTextInWheel].setText(ColorUtil.vec2string(value));
             }
             i++;
         } while(i % numberOfTextInWheel != topTextViewIndex);
+
+        if (minValueIndex != -1) {
+            textViewInWheel[minValueIndex].setText(ColorUtil.vec2string(minValue));
+        }
+        if (maxValueIndex != -1) {
+            textViewInWheel[maxValueIndex].setText(ColorUtil.vec2string(maxValue));
+        }
     }
 
     private void updateTextContainer() {
         int i = topTextViewIndex;
         do {
+            View currentContainer = textContainerInWheel[i % numberOfTextInWheel];
             float intervalCount = i - topTextViewIndex - numberOfTextInWheel / 2f + 0.5f;
-            float offset = intervalCount * textContainerSpacingInWheel + currentWheelOffset;
-            if (i % numberOfTextInWheel == (topTextViewIndex + numberOfTextInWheel / 2) % numberOfTextInWheel) {
-                textContainerInWheel[i % numberOfTextInWheel].setAlpha(focusingAlpha);
-            } else {
-                textContainerInWheel[i % numberOfTextInWheel].setAlpha(containerAlpha.getInterpolation(offset) * globalAlpha);
+            float offset = 0f;
+
+            if (currentScrollingOrientation == ScrollingOrientation.HORIZONTAL) {
+                offset = intervalCount * horizontalSpacingInWheel + currentWheelOffset;
+                currentContainer.setTranslationX(containerTranslation.getInterpolation(offset));
+                currentContainer.setTranslationY(0);
+            } else if (currentScrollingOrientation == ScrollingOrientation.VERTICAL) {
+                offset = intervalCount * verticalSpacingInWheel + currentWheelOffset;
+                currentContainer.setTranslationX(0);
+                currentContainer.setTranslationY(containerTranslation.getInterpolation(offset));
             }
-            textContainerInWheel[i % numberOfTextInWheel].setTranslationY(containerTranslation.getInterpolation(offset));
-            textContainerInWheel[i % numberOfTextInWheel].setScaleX(containerScale.getInterpolation(offset));
-            textContainerInWheel[i % numberOfTextInWheel].setScaleY(containerScale.getInterpolation(offset));
+
+            if (i % numberOfTextInWheel == (topTextViewIndex + numberOfTextInWheel / 2) % numberOfTextInWheel) {
+                currentContainer.setAlpha(focusingAlpha);
+            } else {
+                currentContainer.setAlpha(containerAlpha.getInterpolation(offset) * globalAlpha);
+            }
+
+            currentContainer.setScaleX(containerScale.getInterpolation(offset));
+            currentContainer.setScaleY(containerScale.getInterpolation(offset));
             i++;
         } while(i % numberOfTextInWheel != topTextViewIndex);
     }
@@ -225,7 +286,8 @@ public class ColorTextWheel {
     private final TextView[] textViewInWheel;
     private int topTextViewIndex;
 
-    private final int textContainerSpacingInWheel = 180;
+    private final int verticalSpacingInWheel = 180;
+    private final int horizontalSpacingInWheel = 200;
     private int currentWheelOffset;
 
     private final long emergeDuration = 300;
@@ -287,7 +349,6 @@ class MagneticInterpolator implements Interpolator {
 
     @Override
     public float getInterpolation(float input) {
-        // FIXME: Interpolator Error
         boolean negative = false;
         if (input < 0) {
             input = -input;

@@ -9,7 +9,6 @@
         android:id="@+id/value_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="FE"
-        android:textSize="60sp"
+        android:textSize="54sp"
         android:textColor="@color/dark_text_color"/>
 </FrameLayout>

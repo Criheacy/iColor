@@ -51,11 +51,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        boolean isHandled = false;
         for (ColorTextWheel colorTextWheel: colorTextWheels) {
-            isHandled = isHandled || colorTextWheel.handleGestureEvent(event);
+            if (colorTextWheel.handleGestureEvent(event)) {
+                return true;
+            }
         }
-        return isHandled;
+        return false;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
