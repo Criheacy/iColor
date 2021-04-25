@@ -21,9 +21,10 @@ public class ColorTextWheel {
         void onValueUpdate(int value);
     }
 
-    public ColorTextWheel(Activity activity, RelativeLayout container) {
+    public ColorTextWheel(Activity activity, RelativeLayout container, ColorUtil.ValueNumberFormat valueNumberFormat) {
         this.activity = activity;
         this.container = container;
+        this.valueNumberFormat = valueNumberFormat;
 
         gestureUtil = new GestureUtil(container, new GestureUtil.OnGestureListener() {
             @Override public void click() { }
@@ -91,6 +92,13 @@ public class ColorTextWheel {
             currentWheelOffset = (int) animation.getAnimatedValue();
             updateTextContainer();
         });
+
+        containerOffsetAnimator = new ValueAnimator();
+        containerOffsetAnimator.setDuration(containerOffsetDuration);
+        containerOffsetAnimator.addUpdateListener(animation -> {
+            container.setTranslationX((float) animation.getAnimatedValue());
+        });
+
         currentValue = 240;
 
         startVerticalScroll();
@@ -100,6 +108,12 @@ public class ColorTextWheel {
 
     public void setValueUpdateListener(OnValueUpdateListener l) {
         valueUpdateListener = l;
+    }
+
+    public void setCurrentValue(int value) {
+        currentValue = value;
+        updateTextValue();
+        updateTextContainer();
     }
 
     public boolean handleGestureEvent(MotionEvent event) {
@@ -246,16 +260,16 @@ public class ColorTextWheel {
                 }
                 textViewInWheel[i % numberOfTextInWheel].setText(null);
             } else {
-                textViewInWheel[i % numberOfTextInWheel].setText(ColorUtil.vec2string(value));
+                textViewInWheel[i % numberOfTextInWheel].setText(ColorUtil.vec2string(value, valueNumberFormat));
             }
             i++;
         } while(i % numberOfTextInWheel != topTextViewIndex);
 
         if (minValueIndex != -1) {
-            textViewInWheel[minValueIndex].setText(ColorUtil.vec2string(minValue));
+            textViewInWheel[minValueIndex].setText(ColorUtil.vec2string(minValue, valueNumberFormat));
         }
         if (maxValueIndex != -1) {
-            textViewInWheel[maxValueIndex].setText(ColorUtil.vec2string(maxValue));
+            textViewInWheel[maxValueIndex].setText(ColorUtil.vec2string(maxValue, valueNumberFormat));
         }
     }
 
@@ -288,6 +302,8 @@ public class ColorTextWheel {
         } while(i % numberOfTextInWheel != topTextViewIndex);
     }
 
+    private final ColorUtil.ValueNumberFormat valueNumberFormat;
+
     private final int numberOfTextInWheel = 7;
     private final View[] textContainerInWheel;
     private final TextView[] textViewInWheel;
@@ -318,6 +334,7 @@ public class ColorTextWheel {
     private final Activity activity;
     private final RelativeLayout container;
     private final long containerOffsetDuration = 300;
+    private final ValueAnimator containerOffsetAnimator;
 
     private final GestureUtil gestureUtil;
 }

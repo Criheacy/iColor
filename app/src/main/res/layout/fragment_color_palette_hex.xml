@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/color_prefix_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/color_prefix_text"
+        android:textSize="40sp"
+        android:translationX="-110dp"
+        android:translationY="-3dp"
+        android:layout_centerInParent="true"/>
+
+    <RelativeLayout
+        android:id="@+id/red_value_text_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:translationX="-50dp"
+        android:translationY="-3dp"
+        android:layout_centerInParent="true"/>
+
+    <RelativeLayout
+        android:id="@+id/green_value_text_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:translationX="20dp"
+        android:translationY="-3dp"
+        android:layout_centerInParent="true"/>
+
+    <RelativeLayout
+        android:id="@+id/blue_value_text_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:translationX="90dp"
+        android:translationY="-3dp"
+        android:layout_centerInParent="true"/>
+
+</RelativeLayout>

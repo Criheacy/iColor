@@ -13,38 +13,17 @@
         android:layout_height="match_parent"
         android:background="@color/default_background_color"/>
 
-    <TextView
-        android:id="@+id/color_prefix_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/color_prefix_text"
-        android:textSize="40sp"
-        android:translationX="-110dp"
-        android:translationY="-3dp"
-        android:layout_centerInParent="true"/>
+    <FrameLayout
+        android:id="@+id/main_fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
-    <RelativeLayout
-        android:id="@+id/red_value_text_container"
+    <Button
+        android:id="@+id/test_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:translationX="-50dp"
-        android:translationY="-3dp"
-        android:layout_centerInParent="true"/>
-
-    <RelativeLayout
-        android:id="@+id/green_value_text_container"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:translationX="20dp"
-        android:translationY="-3dp"
-        android:layout_centerInParent="true"/>
-
-    <RelativeLayout
-        android:id="@+id/blue_value_text_container"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:translationX="90dp"
-        android:translationY="-3dp"
-        android:layout_centerInParent="true"/>
+        android:text="test"
+        android:textSize="20sp"
+        android:layout_margin="20dp"/>
 
 </RelativeLayout>

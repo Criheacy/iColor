@@ -4,6 +4,8 @@ import android.util.Log;
 
 import androidx.annotation.IntRange;
 
+import com.icolor.ColorTextWheel;
+
 import static java.lang.Math.round;
 
 public class ColorUtil {
@@ -11,6 +13,10 @@ public class ColorUtil {
     public static int WHITE = 0xFFFFFFFF;
     public static int GRAY  = 0xFF808080;
     public static int BLACK = 0xFF000000;
+
+    public enum ValueNumberFormat {
+        HEX, DEC
+    }
 
     public static int blend(int color1, int color2, float fraction) {
         int r = (int) round(int2ri(color1) * (1 - fraction) + int2ri(color2) * fraction);
@@ -22,7 +28,26 @@ public class ColorUtil {
 
     // Color format conversions
 
-    public static String vec2string(@IntRange(from = 0x00, to = 0xFF) int vec) {
+    public static String vec2string(@IntRange(from = 0x00, to = 0xFF) int vec, ValueNumberFormat format) {
+        switch (format) {
+            case DEC:
+                return vec2bitString(vec);
+            case HEX:
+                return vec2string(vec);
+            default:
+                return null;
+        }
+    }
+
+    private static String vec2bitString(@IntRange(from = 0x00, to = 0xFF) int vec) {
+        StringBuilder result = new StringBuilder(String.valueOf(vec));
+        while (result.length() < 3) {
+            result.insert(0, " ");
+        }
+        return result.toString();
+    }
+
+    private static String vec2string(@IntRange(from = 0x00, to = 0xFF) int vec) {
         StringBuilder result = new StringBuilder();
         int _vec = vec;
         for (int i = 0; i < 2; i++) {
