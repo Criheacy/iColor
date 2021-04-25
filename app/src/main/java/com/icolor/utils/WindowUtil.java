@@ -1,6 +1,8 @@
 package com.icolor.utils;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -10,6 +12,8 @@ import android.view.View;
 import android.view.WindowManager;
 
 import androidx.annotation.RequiresApi;
+
+import static android.content.Context.CLIPBOARD_SERVICE;
 
 public class WindowUtil {
 
@@ -40,5 +44,11 @@ public class WindowUtil {
 
     public static float dps2dp(float dps, Context context) {
         return dps * context.getResources().getDisplayMetrics().density;
+    }
+
+    public static void copyToClipBoard(String valueString, String label, Activity activity) {
+        ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText(label, valueString);
+        clipboard.setPrimaryClip(clip);
     }
 }

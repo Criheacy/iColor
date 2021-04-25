@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.app.Activity;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.icolor.utils.ColorUtil;
 import com.icolor.utils.GradientUtil;
@@ -36,10 +38,47 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        hexPalette = new ColorPalette(ColorUtil.ValueNumberFormat.HEX);
-        decPalette = new ColorPalette(ColorUtil.ValueNumberFormat.DEC);
-
         FragmentManager manager = getSupportFragmentManager();
+
+        // I don't know if there is a better way
+        Activity self = this;
+        hexPalette = new ColorPalette(ColorUtil.ValueNumberFormat.HEX, new ColorPalette.ColorPaletteEventHandler() {
+            @Override
+            public void onSwitchPalette() {
+                decPalette.setCurrentColorValueImmediately(hexPalette.getCurrentValue());
+                manager.beginTransaction()
+                        .setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
+                        .show(decPalette)
+                        .hide(hexPalette)
+                        .commit();
+                activeFragment = decPalette;
+            }
+
+            @Override
+            public void onCopyToClipBoard(String valueString) {
+                Toast.makeText(self, "Value Copied!", Toast.LENGTH_SHORT).show();
+                WindowUtil.copyToClipBoard(valueString, "Color", self);
+            }
+        });
+
+        decPalette = new ColorPalette(ColorUtil.ValueNumberFormat.DEC, new ColorPalette.ColorPaletteEventHandler() {
+            @Override
+            public void onSwitchPalette() {
+                hexPalette.setCurrentColorValueImmediately(decPalette.getCurrentValue());
+                manager.beginTransaction()
+                        .setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
+                        .show(hexPalette)
+                        .hide(decPalette)
+                        .commit();
+                activeFragment = hexPalette;
+            }
+
+            @Override
+            public void onCopyToClipBoard(String valueString) {
+                Toast.makeText(self, "Value Copied!", Toast.LENGTH_SHORT).show();
+                WindowUtil.copyToClipBoard(valueString, "Color", self);
+            }
+        });
 
         manager.beginTransaction()
                 .add(R.id.main_fragment_container, hexPalette)
@@ -49,15 +88,6 @@ public class MainActivity extends AppCompatActivity {
                 .commit();
 
         activeFragment = hexPalette;
-
-        ((Button) findViewById(R.id.test_button)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                activeFragment = decPalette;
-                decPalette.setCurrentColorValueImmediately(hexPalette.getCurrentValue());
-            }
-        });
     }
 
     @Override

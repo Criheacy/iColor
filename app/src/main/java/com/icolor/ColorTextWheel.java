@@ -12,6 +12,8 @@ import android.view.animation.Interpolator;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+
 import com.icolor.utils.ColorUtil;
 import com.icolor.utils.GestureUtil;
 import com.icolor.utils.WindowUtil;
@@ -21,14 +23,37 @@ public class ColorTextWheel {
         void onValueUpdate(int value);
     }
 
-    public ColorTextWheel(Activity activity, RelativeLayout container, ColorUtil.ValueNumberFormat valueNumberFormat) {
+    public interface OnEventListener {
+        void onClick();
+        void onTouch();
+        void onLongTouch();
+    }
+
+    public ColorTextWheel(Activity activity, RelativeLayout container, ColorUtil.ValueNumberFormat valueNumberFormat,
+                          @Nullable OnEventListener onEventListener) {
         this.activity = activity;
         this.container = container;
         this.valueNumberFormat = valueNumberFormat;
 
         gestureUtil = new GestureUtil(container, new GestureUtil.OnGestureListener() {
-            @Override public void click() { }
-            @Override public void touch() { }
+            @Override public void click() {
+                if (onEventListener != null) {
+                    onEventListener.onClick();
+                }
+            }
+
+            @Override public void touch() {
+                if (onEventListener != null) {
+                    onEventListener.onTouch();
+                }
+            }
+
+            @Override
+            public void longTouch() {
+                if (onEventListener != null) {
+                    onEventListener.onLongTouch();
+                }
+            }
 
             @Override
             public void dragStart(GestureUtil.GestureOrientation orientation) {
@@ -62,7 +87,14 @@ public class ColorTextWheel {
 
             textContainerInWheel[i] = inflater.inflate(R.layout.color_value_text, null);
             textContainerInWheel[i].setLayoutParams(textParams);
+
             textViewInWheel[i] = (TextView) textContainerInWheel[i].findViewById(R.id.value_text);
+            if (valueNumberFormat == ColorUtil.ValueNumberFormat.HEX) {
+                textViewInWheel[i].setTextSize(54);
+            } else if (valueNumberFormat == ColorUtil.ValueNumberFormat.DEC) {
+                textViewInWheel[i].setTextSize(40);
+            }
+
             container.addView(textContainerInWheel[i]);
         }
 
@@ -83,7 +115,6 @@ public class ColorTextWheel {
                             RelativeLayout.LayoutParams.WRAP_CONTENT);
                 }
             }
-
         });
 
         resetOffsetAnimator = new ValueAnimator();

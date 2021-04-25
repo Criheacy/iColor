@@ -40,11 +40,11 @@ public class ColorUtil {
     }
 
     private static String vec2bitString(@IntRange(from = 0x00, to = 0xFF) int vec) {
-        StringBuilder result = new StringBuilder(String.valueOf(vec));
-        while (result.length() < 3) {
+        /// Maybe unaligned style looks better
+        /*while (result.length() < 3) {
             result.insert(0, " ");
-        }
-        return result.toString();
+        }*/
+        return String.valueOf(vec);
     }
 
     private static String vec2string(@IntRange(from = 0x00, to = 0xFF) int vec) {

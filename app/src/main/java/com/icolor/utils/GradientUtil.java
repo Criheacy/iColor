@@ -24,6 +24,11 @@ public class GradientUtil {
         animator.start();
     }
 
+    public void changeColorTo(int distColor) {
+        this.distColor = distColor;
+        gradientListener.onColorChanged(distColor);
+    }
+
     public int getColor() {
         if (!animator.isRunning()) {
             return distColor;
@@ -34,10 +39,11 @@ public class GradientUtil {
     }
 
     public void addGradientListener(GradientListener l) {
+        gradientListener = l;
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                l.onColorChanged(getColor());
+                gradientListener.onColorChanged(getColor());
             }
         });
     }
@@ -48,5 +54,6 @@ public class GradientUtil {
 
     private int startColor;
     private int distColor;
+    private GradientListener gradientListener;
     private ValueAnimator animator;
 }

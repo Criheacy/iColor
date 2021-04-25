@@ -1,5 +1,7 @@
 package com.icolor.utils;
 
+import android.animation.Animator;
+import android.animation.ValueAnimator;
 import android.graphics.Point;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -9,6 +11,7 @@ public class GestureUtil {
     public interface OnGestureListener {
         void click();
         void touch();
+        void longTouch();
 
         void dragStart(GestureOrientation orientation);
         void dragging(GestureOrientation orientation, int draggingDistance);
@@ -21,12 +24,42 @@ public class GestureUtil {
 
     public GestureUtil(View view, OnGestureListener gestureListener) {
         this.view = view;
+
+        longTouchTimer = new ValueAnimator();
+        longTouchTimer.setDuration(longTouchDuration);
+        longTouchTimer.setIntValues(0, 1);
+        longTouchTimer.addListener(new Animator.AnimatorListener() {
+            @Override public void onAnimationStart(Animator animation) { }
+            @Override public void onAnimationCancel(Animator animation) {
+                longTouching = false;
+            }
+            @Override public void onAnimationRepeat(Animator animation) { }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (longTouching) {
+                    longTouching = false;
+                    completeLongTouch = true;
+                    gestureListener.longTouch();
+                    Log.d("Long Click", "Long Touch!");
+                }
+            }
+        });
+
         isDragging = false;
+        longTouching = false;
+        completeLongTouch = false;
         this.touchHandler = new TouchHandlerUtil(new TouchHandlerUtil.OnTouchEvent() {
             @Override
             public boolean onClick(Point p) {
                 if (WindowUtil.pointInView(p, view)) {
-                    gestureListener.click();
+                    // long touch cancels the click callback, but handles the event
+                    if (!completeLongTouch) {
+                        gestureListener.click();
+                    }
+                    // click cancels long touch
+                    longTouchTimer.cancel();
+                    completeLongTouch = false;
                     return true;
                 }
                 return false;
@@ -36,6 +69,8 @@ public class GestureUtil {
             public boolean onTouch(Point p) {
                 if (WindowUtil.pointInView(p, view)) {
                     gestureListener.touch();
+                    longTouchTimer.start();
+                    longTouching = true;
                     return false;
                 }
                 return false;
@@ -48,6 +83,9 @@ public class GestureUtil {
                 }
                 if (!isDragging) {
                     isDragging = true;
+
+                    // drag cancels long touch
+                    longTouchTimer.cancel();
                     currentOrientation = getOrientation
                             (new Point(dragTo.x - origin.x, dragTo.y - origin.y));
                     gestureListener.dragStart(currentOrientation);
@@ -62,7 +100,10 @@ public class GestureUtil {
 
             @Override
             public boolean onLeave() {
+                Log.d("Gesture", "Leave");
                 isDragging = false;
+                completeLongTouch = false;
+                longTouchTimer.cancel();
                 currentOrientation = GestureOrientation.NONE;
                 gestureListener.dragEnd();
                 return false;
@@ -98,11 +139,19 @@ public class GestureUtil {
         return (float) Math.acos(dotProduct / (length1 * length2));
     }
 
-    private float orientationAcceptableRange = 40f;
+    private final float orientationAcceptableRange = 40f;
+
+    // Tracks if it's in the process of long touching; Set to false when animator is canceled
+    private boolean longTouching;
+
+    // Tracks if a long touch event has completed
+    private boolean completeLongTouch;
+    private final long longTouchDuration = 500;
+    private final ValueAnimator longTouchTimer;
 
     private boolean isDragging;
     private GestureOrientation currentOrientation;
 
-    private View view;
-    private TouchHandlerUtil touchHandler;
+    private final View view;
+    private final TouchHandlerUtil touchHandler;
 }

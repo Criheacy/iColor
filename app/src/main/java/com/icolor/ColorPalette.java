@@ -3,6 +3,7 @@ package com.icolor;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
@@ -22,19 +23,33 @@ public class ColorPalette extends Fragment {
     public GradientUtil primaryColorGradient;
     public GradientUtil textColorGradient;
 
+    public interface ColorPaletteEventHandler {
+        void onSwitchPalette();
+        void onCopyToClipBoard(String valueString);
+    }
+
     private enum ColorTheme {
         DARK, LIGHT
     }
 
     private final ColorUtil.ValueNumberFormat valueNumberFormat;
+    private final ColorPaletteEventHandler colorPaletteEventHandler;
     private ColorTheme textColorTheme;
     public View primaryColorContainer;
 
     public ColorTextWheel[] colorTextWheels;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public ColorPalette(ColorUtil.ValueNumberFormat valueNumberFormat) {
+    public ColorPalette(ColorUtil.ValueNumberFormat valueNumberFormat, @Nullable ColorPaletteEventHandler handler) {
         this.valueNumberFormat = valueNumberFormat;
+        if (handler == null) {
+            this.colorPaletteEventHandler = new ColorPaletteEventHandler() {
+                @Override public void onSwitchPalette() { }
+                @Override public void onCopyToClipBoard(String valueString) { }
+            };
+        } else {
+            this.colorPaletteEventHandler = handler;
+        }
     }
 
     @Override
@@ -55,13 +70,40 @@ public class ColorPalette extends Fragment {
         textColorGradient = new GradientUtil(R.color.dark_text_color);
         textColorGradient.addGradientListener(color -> updateTextColor(color));
 
+        ColorTextWheel.OnEventListener eventListenerImpl = new ColorTextWheel.OnEventListener() {
+            @Override
+            public void onClick() {
+                colorPaletteEventHandler.onSwitchPalette();
+            }
+
+            @Override
+            public void onTouch() {
+                // What else to implement?
+            }
+
+            @Override
+            public void onLongTouch() {
+                String valueString = "";
+                if (valueNumberFormat == ColorUtil.ValueNumberFormat.HEX) {
+                    valueString = "#" + ColorUtil.vec2string(colorTextWheels[0].getCurrentValue(), ColorUtil.ValueNumberFormat.HEX)
+                            + ColorUtil.vec2string(colorTextWheels[1].getCurrentValue(), ColorUtil.ValueNumberFormat.HEX)
+                            + ColorUtil.vec2string(colorTextWheels[2].getCurrentValue(), ColorUtil.ValueNumberFormat.HEX);
+                } else if (valueNumberFormat == ColorUtil.ValueNumberFormat.DEC) {
+                    valueString = ColorUtil.vec2string(colorTextWheels[0].getCurrentValue(), ColorUtil.ValueNumberFormat.DEC)
+                            + "," + ColorUtil.vec2string(colorTextWheels[1].getCurrentValue(), ColorUtil.ValueNumberFormat.DEC)
+                            + "," + ColorUtil.vec2string(colorTextWheels[2].getCurrentValue(), ColorUtil.ValueNumberFormat.DEC);
+                }
+                colorPaletteEventHandler.onCopyToClipBoard(valueString);
+            }
+        };
+
         colorTextWheels = new ColorTextWheel[3];
         colorTextWheels[0] = new ColorTextWheel(requireActivity(),
-                requireActivity().findViewById(R.id.red_value_text_container), valueNumberFormat);
+                requireView().findViewById(R.id.red_value_text_container), valueNumberFormat, eventListenerImpl);
         colorTextWheels[1] = new ColorTextWheel(requireActivity(),
-                requireActivity().findViewById(R.id.green_value_text_container), valueNumberFormat);
+                requireView().findViewById(R.id.green_value_text_container), valueNumberFormat, eventListenerImpl);
         colorTextWheels[2] = new ColorTextWheel(requireActivity(),
-                requireActivity().findViewById(R.id.blue_value_text_container), valueNumberFormat);
+                requireView().findViewById(R.id.blue_value_text_container), valueNumberFormat, eventListenerImpl);
 
         for (ColorTextWheel colorTextWheel: colorTextWheels) {
             colorTextWheel.setValueUpdateListener(value -> setGradientUseWheels());
@@ -70,9 +112,15 @@ public class ColorPalette extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_color_palette_hex, container, false);
+        if (valueNumberFormat == ColorUtil.ValueNumberFormat.HEX) {
+            return inflater.inflate(R.layout.fragment_color_palette_hex, container, false);
+        } else if (valueNumberFormat == ColorUtil.ValueNumberFormat.DEC) {
+            return inflater.inflate(R.layout.fragment_color_palette_dec, container, false);
+        } else {
+            return null;
+        }
     }
 
     public boolean handleMotionEvent(MotionEvent event) {
@@ -102,7 +150,7 @@ public class ColorPalette extends Fragment {
         colorTextWheels[1].setCurrentValue(g);
         colorTextWheels[2].setCurrentValue(b);
 
-        updatePrimaryColorContainer(colorValue);
+        primaryColorGradient.changeColorTo(colorValue);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -147,7 +195,7 @@ public class ColorPalette extends Fragment {
                         .setTextColor(color);
             }
         }
-        ((TextView) requireActivity().findViewById(R.id.color_prefix_text)).setTextColor
+        ((TextView) requireView().findViewById(R.id.color_prefix_text)).setTextColor
                 (ColorUtil.blend(color, ColorUtil.GRAY, 0.3f));
     }
 }
