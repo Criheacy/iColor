@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onCopyToClipBoard(String valueString) {
-                Toast.makeText(self, "Value Copied!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(self, R.string.copy_info, Toast.LENGTH_SHORT).show();
                 WindowUtil.copyToClipBoard(valueString, "Color", self);
             }
         });
@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onCopyToClipBoard(String valueString) {
-                Toast.makeText(self, "Value Copied!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(self, R.string.copy_info, Toast.LENGTH_SHORT).show();
                 WindowUtil.copyToClipBoard(valueString, "Color", self);
             }
         });

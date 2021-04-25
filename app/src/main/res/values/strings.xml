@@ -2,4 +2,6 @@
     <string name="app_name">iColor</string>
 
     <string name="color_prefix_text">#</string>
+    <string name="copy_label">Color-Value</string>
+    <string name="copy_info">Copied to clipboard</string>
 </resources>

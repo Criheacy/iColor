@@ -81,6 +81,10 @@ public class GestureUtil {
                 if (!WindowUtil.pointInView(origin, view)) {
                     return false;
                 }
+                // long touch cancels the drag event
+                if (completeLongTouch) {
+                    return true;
+                }
                 if (!isDragging) {
                     isDragging = true;
 
